@@ -1,0 +1,22 @@
+<resources>
+    <string name="app_name">Online Shop</string>
+    <string name="intro_title">Step into your <font color="#FFBB86FC"> style\n A world of shoes</font></string>
+    <string name="intro_text">Browse the latest styles from top brands\nGet personalized recommendations\nEnjoy fast, free shipping</string>
+    <string name="button_text">Let\'s Get Started</string>
+    <string name="intro_sign_in">Already have an account? <font color="#FFBB86FC">Sign In</font> </string>
+    <string name="dash_greeting">Hello</string>
+    <string name="dash_user">Guest</string>
+    <string name="dash_brand">Official Brand</string>
+    <string name="dash_recommend">Recommendation</string>
+    <string name="dash_see_all">See All</string>
+    <string name="dash_exp">Explorer</string>
+    <string name="dash_cart">Cart</string>
+    <string name="dash_fav">Wishlist</string>
+    <string name="dash_order">My Order</string>
+    <string name="dash_profile">Profile</string>
+    <string name="holder_txt">Title</string>
+    <string name="holder_currency">Rp</string>
+    <string name="rating">4.3</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+</resources>
