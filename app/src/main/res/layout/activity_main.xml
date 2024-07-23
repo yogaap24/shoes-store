@@ -223,7 +223,7 @@
     </ScrollView>
 
     <include
-        android:id="@+id/bottomNavigationView"
+        android:id="@+id/dashNavigation"
         layout="@layout/bottom_navigation" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

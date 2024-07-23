@@ -73,7 +73,7 @@
 
     <!-- Include untuk Bottom Navigation -->
     <include
-        android:id="@+id/bottomNavigationView"
+        android:id="@+id/listNavigation"
         layout="@layout/bottom_navigation" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

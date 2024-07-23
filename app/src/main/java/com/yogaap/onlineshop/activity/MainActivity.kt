@@ -11,11 +11,14 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.CompositePageTransformer
 import androidx.viewpager2.widget.MarginPageTransformer
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.yogaap.onlineshop.Adapter.BrandAdapter
 import com.yogaap.onlineshop.Adapter.RecommendAdapter
 import com.yogaap.onlineshop.Adapter.SliderAdapter
 import com.yogaap.onlineshop.Helper.SessionManager
+import com.yogaap.onlineshop.Helper.setupNavigation
 import com.yogaap.onlineshop.Model.SliderModel
+import com.yogaap.onlineshop.R
 import com.yogaap.onlineshop.ViewModel.MainViewModel
 import com.yogaap.onlineshop.databinding.ActivityMainBinding
 
@@ -23,6 +26,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var sessionManager: SessionManager
+    private lateinit var bottomNavigationView: BottomNavigationView
 
     private val viewModel = MainViewModel()
     private val handler = Handler(Looper.getMainLooper())
@@ -36,16 +40,17 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         val scrollView = binding.mainScrollView
-        val bottomNavigationView = binding.bottomNavigationView
+        val dashNavigation = binding.dashNavigation.bottomNavigationLayout
+        bottomNavigationView = dashNavigation.findViewById(R.id.bottomNavigation)
 
         scrollView.setOnScrollChangeListener { _, _, scrollY, _, oldScrollY ->
             if (scrollY != oldScrollY) {
-                bottomNavigationView.bottomNavigation.visibility = View.GONE
+                dashNavigation.visibility = View.GONE
                 isScrolling = true
                 scrollRunnable?.let { handler.removeCallbacks(it) }
                 scrollRunnable = Runnable {
                     if (isScrolling) {
-                        bottomNavigationView.bottomNavigation.visibility = View.VISIBLE
+                        dashNavigation.visibility = View.VISIBLE
                         isScrolling = false
                     }
                 }
@@ -58,7 +63,7 @@ class MainActivity : AppCompatActivity() {
             if (scrollY == scrollView.scrollY && isScrolling) {
                 handler.removeCallbacks(scrollRunnable!!)
                 scrollRunnable = Runnable {
-                    bottomNavigationView.bottomNavigation.visibility = View.VISIBLE
+                    dashNavigation.visibility = View.VISIBLE
                     isScrolling = false
                 }
                 handler.postDelayed(scrollRunnable!!, scrollDelay)
@@ -66,6 +71,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         sessionManager = SessionManager(this)
+
         isUserLoggedIn()
         initBanner()
         initBrand()
@@ -73,13 +79,7 @@ class MainActivity : AppCompatActivity() {
         initRecommend()
         seeAllRecommend()
 
-        binding.bottomNavigationView.dashCartBtn.setOnClickListener {
-            if (sessionManager.getUserSession() != null) {
-                // Open Cart Activity
-            } else {
-                userNotLoggedIn()
-            }
-        }
+        bottomNavigationView.setupNavigation(this)
     }
 
     private fun initBanner() {
@@ -150,9 +150,5 @@ class MainActivity : AppCompatActivity() {
         sessionManager.getUserSession()?.let {
             binding.dashUserName.text = it.name
         }
-    }
-
-    private fun userNotLoggedIn() {
-        startActivity(Intent(this, LoginActivity::class.java))
     }
 }
