@@ -25,6 +25,7 @@ class MainActivity : AppCompatActivity() {
     private val handler = Handler(Looper.getMainLooper())
     private var isScrolling = false
     private var scrollRunnable: Runnable? = null
+    private val scrollDelay = 350L
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,8 +35,8 @@ class MainActivity : AppCompatActivity() {
         val scrollView = binding.mainScrollView
         val bottomNavigationView = binding.bottomNavigationView
 
-        scrollView.setOnScrollChangeListener { v, _, scrollY, _, oldScrollY ->
-            if (scrollY > oldScrollY || scrollY < oldScrollY) {
+        scrollView.setOnScrollChangeListener { _, _, scrollY, _, oldScrollY ->
+            if (scrollY != oldScrollY) {
                 bottomNavigationView.bottomNavigation.visibility = View.GONE
                 isScrolling = true
                 scrollRunnable?.let { handler.removeCallbacks(it) }
@@ -45,7 +46,19 @@ class MainActivity : AppCompatActivity() {
                         isScrolling = false
                     }
                 }
-                handler.postDelayed(scrollRunnable!!, 300)
+                handler.postDelayed(scrollRunnable!!, scrollDelay)
+            }
+        }
+
+        scrollView.viewTreeObserver.addOnScrollChangedListener {
+            val scrollY = scrollView.scrollY
+            if (scrollY == scrollView.scrollY && isScrolling) {
+                handler.removeCallbacks(scrollRunnable!!)
+                scrollRunnable = Runnable {
+                    bottomNavigationView.bottomNavigation.visibility = View.VISIBLE
+                    isScrolling = false
+                }
+                handler.postDelayed(scrollRunnable!!, scrollDelay)
             }
         }
 

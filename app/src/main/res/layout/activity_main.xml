@@ -16,7 +16,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingBottom="100dp">
+            android:paddingBottom="80dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -132,7 +132,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/dash_see_all"
-                    android:textColor="@color/purple" />
+                    android:textColor="@color/purple"
+                    android:textSize="16sp" />
 
             </LinearLayout>
 
@@ -187,7 +188,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/dash_see_all"
-                    android:textColor="@color/purple" />
+                    android:textColor="@color/purple"
+                    android:textSize="16sp" />
 
             </LinearLayout>
 
