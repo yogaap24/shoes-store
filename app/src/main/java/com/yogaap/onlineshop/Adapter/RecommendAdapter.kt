@@ -1,18 +1,20 @@
 package com.yogaap.onlineshop.Adapter
 
 import android.content.Context
+import android.content.Intent
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.request.RequestOptions
-import com.yogaap.onlineshop.Model.ItemModel
+import com.yogaap.onlineshop.Model.ItemsModel
+import com.yogaap.onlineshop.activity.DetailActivity
 import com.yogaap.onlineshop.databinding.ViewHolderRecommendationBinding
 
 class RecommendAdapter (
-    val items : MutableList<ItemModel>,
-    val isDetailView: Boolean
+    val items : MutableList<ItemsModel>,
+    val isListAllView: Boolean
 ) : RecyclerView.Adapter<RecommendAdapter.ViewHolder>() {
 
     private var context : Context? = null
@@ -37,8 +39,8 @@ class RecommendAdapter (
             .apply(requestOptions)
             .into(holder.binding.recommendImgView)
 
-        if (isDetailView) {
-            if (itemCount < 5) {
+        if (isListAllView) {
+            if (itemCount < 10) {
                 holder.binding.recommendImgView.layoutParams.width = dpToPx(context!!, 364)
                 holder.binding.recommendImgView.layoutParams.height = dpToPx(context!!, 164)
 
@@ -61,11 +63,17 @@ class RecommendAdapter (
                 holder.binding.starImgView.layoutParams.height = dpToPx(context!!, 20)
             }
         }
+
+        holder.binding.root.setOnClickListener {
+            val intent = Intent(context, DetailActivity::class.java)
+            intent.putExtra("item_object", items[position])
+            holder.itemView.context.startActivity(intent)
+        }
     }
 
     override fun getItemCount(): Int = items.size
 
-    class ViewHolder (val binding: ViewHolderRecommendationBinding) :
+    inner class ViewHolder (val binding: ViewHolderRecommendationBinding) :
         RecyclerView.ViewHolder(binding.root)
 }
 

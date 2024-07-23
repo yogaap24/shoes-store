@@ -8,8 +8,8 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
-import com.yogaap.onlineshop.Model.BrandModel
-import com.yogaap.onlineshop.Model.ItemModel
+import com.yogaap.onlineshop.Model.BrandsModel
+import com.yogaap.onlineshop.Model.ItemsModel
 import com.yogaap.onlineshop.Model.SliderModel
 
 class MainViewModel() : ViewModel() {
@@ -17,12 +17,12 @@ class MainViewModel() : ViewModel() {
     private val firebaseDatabase = FirebaseDatabase.getInstance()
 
     private val _banner = MutableLiveData<List<SliderModel>>()
-    private val _brand = MutableLiveData<MutableList<BrandModel>>()
-    private val _recommend = MutableLiveData<MutableList<ItemModel>>()
+    private val _brand = MutableLiveData<MutableList<BrandsModel>>()
+    private val _recommend = MutableLiveData<MutableList<ItemsModel>>()
 
     val banners: LiveData<List<SliderModel>> = _banner
-    val brands: LiveData<MutableList<BrandModel>> = _brand
-    val recommends: LiveData<MutableList<ItemModel>> = _recommend
+    val brands: LiveData<MutableList<BrandsModel>> = _brand
+    val recommends: LiveData<MutableList<ItemsModel>> = _recommend
 
     fun loadBanner() {
         val ref = firebaseDatabase.getReference("Banner")
@@ -46,9 +46,9 @@ class MainViewModel() : ViewModel() {
         val ref = firebaseDatabase.getReference("Category")
         ref.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                val lists = mutableListOf<BrandModel>()
+                val lists = mutableListOf<BrandsModel>()
                 for (data in snapshot.children) {
-                    val item = data.getValue(BrandModel::class.java)
+                    val item = data.getValue(BrandsModel::class.java)
                     item?.let { lists.add(item) }
                 }
                 _brand.value = lists
@@ -64,9 +64,9 @@ class MainViewModel() : ViewModel() {
         val ref = firebaseDatabase.getReference("Items")
         ref.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                val lists = mutableListOf<ItemModel>()
+                val lists = mutableListOf<ItemsModel>()
                 for (data in snapshot.children) {
-                    val item = data.getValue(ItemModel::class.java)
+                    val item = data.getValue(ItemsModel::class.java)
                     item?.let { lists.add(item) }
                 }
                 _recommend.value = lists

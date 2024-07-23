@@ -9,14 +9,14 @@ import androidx.core.widget.ImageViewCompat
 import androidx.recyclerview.widget.LinearSmoothScroller
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.yogaap.onlineshop.Model.BrandModel
+import com.yogaap.onlineshop.Model.BrandsModel
 import com.yogaap.onlineshop.R
 import com.yogaap.onlineshop.databinding.ViewHolderBrandBinding
 
 class BrandAdapter(
-    val items: MutableList<BrandModel>,
+    val items: MutableList<BrandsModel>,
     val recyclerView: RecyclerView,
-    val isDetailView: Boolean
+    val isListAllView: Boolean
 ) : RecyclerView.Adapter<BrandAdapter.ViewHolder>() {
 
     private var selectedPosition = RecyclerView.NO_POSITION
@@ -34,7 +34,7 @@ class BrandAdapter(
     override fun onBindViewHolder(holder: BrandAdapter.ViewHolder, position: Int) {
         val item = items[position]
 
-        if (isDetailView) {
+        if (isListAllView) {
             holder.binding.detailLayout.visibility = View.VISIBLE
             holder.binding.homeLayout.visibility = View.GONE
             holder.binding.txtViewBrandDetail.text = item.title

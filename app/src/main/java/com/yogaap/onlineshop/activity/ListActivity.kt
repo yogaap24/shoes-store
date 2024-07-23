@@ -69,7 +69,7 @@ class ListActivity : AppCompatActivity() {
     private fun initRecommend() {
         binding.progressBarBrand.visibility = View.VISIBLE
         viewModel.recommends.observe(this, { recommends ->
-            val layoutManager = if (recommends.size < 5) {
+            val layoutManager = if (recommends.size < 10) {
                 LinearLayoutManager(this)
             } else {
                 GridLayoutManager(this, 2)
