@@ -17,5 +17,8 @@ class IntroActivity : BaseActivity() {
             startActivity(Intent(this, MainActivity::class.java))
         }
 
+        binding.introSignInText.setOnClickListener {
+            startActivity(Intent(this, LoginActivity::class.java))
+        }
     }
 }

@@ -14,14 +14,17 @@ import androidx.viewpager2.widget.MarginPageTransformer
 import com.yogaap.onlineshop.Adapter.BrandAdapter
 import com.yogaap.onlineshop.Adapter.RecommendAdapter
 import com.yogaap.onlineshop.Adapter.SliderAdapter
+import com.yogaap.onlineshop.Helper.SessionManager
 import com.yogaap.onlineshop.Model.SliderModel
 import com.yogaap.onlineshop.ViewModel.MainViewModel
 import com.yogaap.onlineshop.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
 
-    private val viewModel = MainViewModel()
     private lateinit var binding: ActivityMainBinding
+    private lateinit var sessionManager: SessionManager
+
+    private val viewModel = MainViewModel()
     private val handler = Handler(Looper.getMainLooper())
     private var isScrolling = false
     private var scrollRunnable: Runnable? = null
@@ -62,11 +65,21 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        sessionManager = SessionManager(this)
+        isUserLoggedIn()
         initBanner()
         initBrand()
         seeAllBrand()
         initRecommend()
         seeAllRecommend()
+
+        binding.bottomNavigationView.dashCartBtn.setOnClickListener {
+            if (sessionManager.getUserSession() != null) {
+                // Open Cart Activity
+            } else {
+                userNotLoggedIn()
+            }
+        }
     }
 
     private fun initBanner() {
@@ -131,5 +144,15 @@ class MainActivity : AppCompatActivity() {
             intent.putExtra("TYPE", "RECOMMEND")
             startActivity(intent)
         }
+    }
+
+    private fun isUserLoggedIn() {
+        sessionManager.getUserSession()?.let {
+            binding.dashUserName.text = it.name
+        }
+    }
+
+    private fun userNotLoggedIn() {
+        startActivity(Intent(this, LoginActivity::class.java))
     }
 }
