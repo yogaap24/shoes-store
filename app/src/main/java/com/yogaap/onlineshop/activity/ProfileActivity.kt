@@ -3,6 +3,8 @@ package com.yogaap.onlineshop.activity
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
@@ -15,6 +17,8 @@ import com.google.firebase.storage.FirebaseStorage
 import com.yogaap.onlineshop.Helper.SessionManager
 import com.yogaap.onlineshop.R
 import com.yogaap.onlineshop.databinding.ActivityProfileBinding
+import java.io.File
+import java.io.FileOutputStream
 
 class ProfileActivity : AppCompatActivity() {
 
@@ -58,6 +62,16 @@ class ProfileActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         userProfile()
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == PICK_IMAGE_REQUEST && resultCode == Activity.RESULT_OK
+            && data != null && data.data != null
+        ) {
+            imageUri = data.data
+            compressImage()
+        }
     }
 
     private fun userProfile() {
@@ -179,29 +193,34 @@ class ProfileActivity : AppCompatActivity() {
         }
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == PICK_IMAGE_REQUEST && resultCode == Activity.RESULT_OK
-            && data != null && data.data != null
-        ) {
-            imageUri = data.data
-            uploadImage()
+    private fun compressImage() {
+        imageUri?.let {
+            val compressedFile = File(this.cacheDir, "${System.currentTimeMillis()}.jpg")
+            val bitmap = BitmapFactory.decodeStream(contentResolver.openInputStream(it))
+            val outputStream = FileOutputStream(compressedFile)
+
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 75, outputStream)
+            outputStream.flush()
+            outputStream.close()
+
+            val compressedUri = Uri.fromFile(compressedFile)
+            uploadImage(compressedUri)
         }
     }
 
-    private fun uploadImage() {
+    private fun uploadImage(uri: Uri) {
         if (imageUri != null) {
             val fileReference = FirebaseStorage.getInstance().getReference("profile_images")
                 .child(
                     auth.currentUser?.uid.toString()
                             + "-" + System.currentTimeMillis()
-                            + "." + getFileExtension(imageUri!!)
+                            + "." + getFileExtension(uri)
                 )
 
-            fileReference.putFile(imageUri!!)
+            fileReference.putFile(uri)
                 .addOnSuccessListener { taskSnapshot ->
-                    taskSnapshot.storage.downloadUrl.addOnSuccessListener { uri ->
-                        updateProfileImage(uri)
+                    taskSnapshot.storage.downloadUrl.addOnSuccessListener { imageUri ->
+                        updateProfileImage(imageUri)
                     }
                 }
                 .addOnFailureListener {
