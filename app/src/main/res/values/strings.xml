@@ -27,4 +27,5 @@
     <string name="input_email">Email</string>
     <string name="register_text">Register</string>
     <string name="input_name">Name</string>
+    <string name="logout">Logout</string>
 </resources>

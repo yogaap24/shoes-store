@@ -8,6 +8,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.yogaap.onlineshop.R
 import com.yogaap.onlineshop.activity.ListActivity
 import com.yogaap.onlineshop.activity.LoginActivity
+import com.yogaap.onlineshop.activity.ProfileActivity
 
 fun BottomNavigationView.setupNavigation(context: Context) {
     val sessionManager = SessionManager(context)
@@ -47,7 +48,7 @@ fun BottomNavigationView.setupNavigation(context: Context) {
         if (sessionManager.getUserSession() == null) {
             context.startActivity(Intent(context, LoginActivity::class.java))
         } else {
-            Toast.makeText(context, "Profile", Toast.LENGTH_SHORT).show()
+            context.startActivity(Intent(context, ProfileActivity::class.java))
         }
     }
 }

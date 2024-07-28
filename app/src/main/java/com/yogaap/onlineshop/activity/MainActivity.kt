@@ -1,11 +1,19 @@
 package com.yogaap.onlineshop.activity
 
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.os.Handler
 import android.os.Looper
+import android.provider.Settings
 import android.view.View
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -33,6 +41,7 @@ class MainActivity : AppCompatActivity() {
     private var isScrolling = false
     private var scrollRunnable: Runnable? = null
     private val scrollDelay = 350L
+    private val PERMISSION_REQUEST_CODE = 100
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -78,6 +87,8 @@ class MainActivity : AppCompatActivity() {
         seeAllBrand()
         initRecommend()
         seeAllRecommend()
+
+        checkAndRequestPermissions()
 
         bottomNavigationView.setupNavigation(this)
     }
@@ -150,5 +161,72 @@ class MainActivity : AppCompatActivity() {
         sessionManager.getUserSession()?.let {
             binding.dashUserName.text = it.name
         }
+    }
+
+    private fun checkAndRequestPermissions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if (!Environment.isExternalStorageManager()) {
+                val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
+                intent.data = Uri.parse("package:$packageName")
+                startActivityForResult(intent, PERMISSION_REQUEST_CODE)
+            }
+        } else {
+            val permissions = arrayOf(
+                android.Manifest.permission.READ_EXTERNAL_STORAGE,
+                android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                android.Manifest.permission.CAMERA,
+                android.Manifest.permission.ACCESS_FINE_LOCATION,
+                android.Manifest.permission.ACCESS_COARSE_LOCATION
+            )
+
+            val permissionsToRequest = permissions.filter {
+                checkSelfPermission(it) != android.content.pm.PackageManager.PERMISSION_GRANTED
+            }
+
+            if (permissionsToRequest.isNotEmpty()) {
+                ActivityCompat.requestPermissions(
+                    this,
+                    permissionsToRequest.toTypedArray(),
+                    PERMISSION_REQUEST_CODE
+                )
+            }
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == PERMISSION_REQUEST_CODE) {
+            if (grantResults.isNotEmpty() && grantResults.all {
+                    it == PackageManager.PERMISSION_GRANTED
+                }) {
+                Toast.makeText(this, "Semua izin diberikan.", Toast.LENGTH_SHORT)
+                    .show()
+            } else {
+                showPermissionDeniedDialog()
+            }
+        }
+    }
+
+    private fun showPermissionDeniedDialog() {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Izin Diperlukan")
+        builder.setMessage(
+            "Izin penyimpanan diperlukan untuk menggunakan aplikasi ini. " +
+                    "Harap izinkan melalui Pengaturan."
+        )
+        builder.setPositiveButton("Pengaturan") { dialog, which ->
+            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+            val uri = Uri.fromParts("package", packageName, null)
+            intent.data = uri
+            startActivity(intent)
+        }
+        builder.setNegativeButton("Batal") { dialog, which ->
+            dialog.dismiss()
+        }
+        builder.show()
     }
 }

@@ -71,4 +71,8 @@ dependencies {
 
     // Firebase dependencies
     implementation("com.google.firebase:firebase-auth:21.0.1")
+    implementation("com.google.firebase:firebase-storage:21.0.0")
+
+    // Image Circle View
+    implementation("de.hdodenhof:circleimageview:3.1.0")
 }

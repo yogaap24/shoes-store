@@ -62,7 +62,11 @@ class LoginActivity : AppCompatActivity() {
                                 val user = userSnapshot.getValue(UsersModel::class.java)
                                 if (user != null) {
                                     sessionManager.saveUserSession(user.name, user.email)
-                                    startActivity(Intent(this, MainActivity::class.java))
+                                    startActivity(
+                                        Intent(
+                                            this, MainActivity::class.java
+                                        )
+                                    )
                                     finish()
                                 } else {
                                     binding.loginEmail.error = "User not found"
