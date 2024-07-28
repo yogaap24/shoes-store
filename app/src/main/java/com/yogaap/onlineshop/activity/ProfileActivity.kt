@@ -55,6 +55,11 @@ class ProfileActivity : AppCompatActivity() {
         userProfile()
     }
 
+    override fun onResume() {
+        super.onResume()
+        userProfile()
+    }
+
     private fun userProfile() {
         val user = sessionManager.getUserSession()
         user?.let {
