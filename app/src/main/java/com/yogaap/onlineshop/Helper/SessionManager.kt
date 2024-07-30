@@ -45,4 +45,8 @@ class SessionManager(context: Context) {
     fun getImageUrl(): String? {
         return prefs.getString(KEY_IMAGE_URL, null)
     }
+
+    fun clearImageUrl() {
+        prefs.edit().remove(KEY_IMAGE_URL).apply()
+    }
 }

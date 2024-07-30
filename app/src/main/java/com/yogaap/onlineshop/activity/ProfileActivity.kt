@@ -3,30 +3,26 @@ package com.yogaap.onlineshop.activity
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.Intent
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.ViewModelProvider
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.UserProfileChangeRequest
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.storage.FirebaseStorage
+import com.yogaap.onlineshop.Helper.ImageHelper
 import com.yogaap.onlineshop.Helper.SessionManager
 import com.yogaap.onlineshop.R
+import com.yogaap.onlineshop.ViewModel.ProfileViewModel
 import com.yogaap.onlineshop.databinding.ActivityProfileBinding
-import java.io.File
-import java.io.FileOutputStream
 
 class ProfileActivity : AppCompatActivity() {
 
-    private lateinit var binding: ActivityProfileBinding
     private lateinit var auth: FirebaseAuth
+    private lateinit var binding: ActivityProfileBinding
     private lateinit var sessionManager: SessionManager
+    private lateinit var viewModel: ProfileViewModel
 
-    private val PICK_IMAGE_REQUEST = 1
     private var imageUri: Uri? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -35,6 +31,7 @@ class ProfileActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         auth = FirebaseAuth.getInstance()
+        viewModel = ViewModelProvider(this).get(ProfileViewModel::class.java)
         sessionManager = SessionManager(this)
 
         binding.profileBack.setOnClickListener {
@@ -46,22 +43,19 @@ class ProfileActivity : AppCompatActivity() {
         }
 
         binding.profileLogout.setOnClickListener {
-            auth.signOut()
-            sessionManager.clearUserSession()
-            startActivity(Intent(this, LoginActivity::class.java))
-            finish()
+            logout()
         }
 
         binding.profileImage.setOnClickListener {
             showImageOptionsDialog()
         }
 
-        userProfile()
+        observeViewModel()
     }
 
     override fun onResume() {
         super.onResume()
-        userProfile()
+        viewModel.loadUserProfile()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -70,203 +64,70 @@ class ProfileActivity : AppCompatActivity() {
             && data != null && data.data != null
         ) {
             imageUri = data.data
-            compressImage()
+            val compressedImage = ImageHelper.compressImage(this, imageUri!!)
+            viewModel.uploadProfileImage(compressedImage)
         }
     }
 
-    private fun userProfile() {
-        val user = sessionManager.getUserSession()
-        user?.let {
-            binding.profileName.text = it.name
-            binding.profileEmail.text = it.email
-
-            val cachedImageUrl = sessionManager.getImageUrl()
-            if (cachedImageUrl != null) {
+    private fun observeViewModel() {
+        viewModel.userProfile.observe(this, { user ->
+            binding.profileName.text = user?.name
+            binding.profileEmail.text = user?.email
+            val imageUrl = user?.imageUrl ?: sessionManager.getImageUrl()
+            if (imageUrl != null) {
                 Glide.with(this)
-                    .load(cachedImageUrl)
-                    .placeholder(R.drawable.img_profile)
+                    .load(imageUrl)
+                    .diskCacheStrategy(DiskCacheStrategy.ALL)
+                    .skipMemoryCache(false)
                     .into(binding.profileImage)
             } else {
-                val userUid = auth.currentUser?.uid ?: return
-                val databaseReference =
-                    FirebaseDatabase.getInstance().getReference("Users").child(userUid)
-                databaseReference.child("imageUrl").get()
-                    .addOnSuccessListener { snapshot ->
-                        val imageUrl = snapshot.getValue(String::class.java)
-                        if (!imageUrl.isNullOrEmpty()) {
-                            Glide.with(this)
-                                .load(imageUrl)
-                                .into(binding.profileImage)
-                            sessionManager.saveImageUrl(imageUrl)
-                        } else {
-                            binding.profileImage.setImageResource(R.drawable.img_profile)
-                        }
-                    }.addOnFailureListener {
-                        binding.profileImage.setImageResource(R.drawable.img_profile)
-                    }
+                binding.profileImage.setImageResource(R.drawable.img_profile)
             }
-        }
+        })
+
+        viewModel.imageUploadResult.observe(this, { result ->
+            result?.let {
+                if (it.first != null) {
+                    Glide.with(this)
+                        .load(it.first)
+                        .into(binding.profileImage)
+                }
+            }
+        })
+
+        viewModel.imageDeleteResult.observe(this, { success ->
+            if (success == true) {
+                binding.profileImage.setImageResource(R.drawable.img_profile)
+            }
+        })
+    }
+
+    private fun logout() {
+        auth.signOut()
+        sessionManager.clearUserSession()
+        sessionManager.clearImageUrl()
+        startActivity(Intent(this, LoginActivity::class.java))
+        finish()
     }
 
     private fun showImageOptionsDialog() {
         val options = arrayOf("Lihat Gambar", "Edit Gambar", "Hapus Gambar")
         val builder = AlertDialog.Builder(this)
-        builder.setItems(options) { dialog, which ->
+        builder.setItems(options) { _, which ->
             when (which) {
                 0 -> viewProfileImage()
-                1 -> openFileChooser()
-                2 -> deleteProfileImage()
+                1 -> ImageHelper.openImageChooser(this)
+                2 -> viewModel.deleteProfileImage()
             }
         }
         builder.show()
     }
 
     private fun viewProfileImage() {
-        val userUid = auth.currentUser?.uid ?: return
-        val databaseReference = FirebaseDatabase.getInstance().getReference("Users")
-            .child(userUid)
-        databaseReference.child("imageUrl").get().addOnSuccessListener { snapshot ->
-            val imageUrl = snapshot.getValue(String::class.java)
-            if (!imageUrl.isNullOrEmpty()) {
-                val intent = Intent(this, ViewImageActivity::class.java)
-                intent.putExtra("imageUrl", imageUrl)
-                startActivity(intent)
-            } else {
-                Toast.makeText(
-                    this, "Gambar profil tidak tersedia.", Toast.LENGTH_SHORT
-                ).show()
-            }
-        }
+        viewModel.viewProfileImage(this)
     }
 
-    private fun openFileChooser() {
-        val intent = Intent()
-        intent.type = "image/*"
-        intent.action = Intent.ACTION_GET_CONTENT
-        startActivityForResult(intent, PICK_IMAGE_REQUEST)
-    }
-
-    private fun deleteProfileImage() {
-        val user = auth.currentUser
-        val userUid = user?.uid ?: return
-        val databaseReference = FirebaseDatabase.getInstance().getReference("Users")
-            .child(userUid)
-
-        databaseReference.child("imageUrl").get().addOnSuccessListener { snapshot ->
-            val imageUrl = snapshot.getValue(String::class.java)
-            if (!imageUrl.isNullOrEmpty()) {
-                val storageReference = FirebaseStorage.getInstance().getReferenceFromUrl(imageUrl)
-
-                storageReference.delete().addOnSuccessListener {
-                    val profileUpdates = UserProfileChangeRequest.Builder()
-                        .setPhotoUri(null)
-                        .build()
-
-                    user.updateProfile(profileUpdates)
-                        .addOnCompleteListener { task ->
-                            if (task.isSuccessful) {
-                                binding.profileImage.setImageResource(R.drawable.img_profile)
-                                sessionManager.saveImageUrl("")
-                                saveProfileImageUriToDatabase(null)
-                            }
-                        }
-                }.addOnFailureListener {
-                    Toast.makeText(this, "Gagal hapus gambar.", Toast.LENGTH_SHORT)
-                        .show()
-                }
-            } else {
-                val profileUpdates = UserProfileChangeRequest.Builder()
-                    .setPhotoUri(null)
-                    .build()
-
-                user.updateProfile(profileUpdates)
-                    .addOnCompleteListener { task ->
-                        if (task.isSuccessful) {
-                            binding.profileImage.setImageResource(R.drawable.img_profile)
-                            sessionManager.saveImageUrl("")
-                            saveProfileImageUriToDatabase(null)
-                        }
-                    }
-            }
-        }.addOnFailureListener {
-            Toast.makeText(this, "Gambar tidak ditemukan.", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    private fun compressImage() {
-        imageUri?.let {
-            val compressedFile = File(this.cacheDir, "${System.currentTimeMillis()}.jpg")
-            val bitmap = BitmapFactory.decodeStream(contentResolver.openInputStream(it))
-            val outputStream = FileOutputStream(compressedFile)
-
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 75, outputStream)
-            outputStream.flush()
-            outputStream.close()
-
-            val compressedUri = Uri.fromFile(compressedFile)
-            uploadImage(compressedUri)
-        }
-    }
-
-    private fun uploadImage(uri: Uri) {
-        if (imageUri != null) {
-            val fileReference = FirebaseStorage.getInstance().getReference("profile_images")
-                .child(
-                    auth.currentUser?.uid.toString()
-                            + "-" + System.currentTimeMillis()
-                            + "." + getFileExtension(uri)
-                )
-
-            fileReference.putFile(uri)
-                .addOnSuccessListener { taskSnapshot ->
-                    taskSnapshot.storage.downloadUrl.addOnSuccessListener { imageUri ->
-                        updateProfileImage(imageUri)
-                    }
-                }
-                .addOnFailureListener {
-                    Toast.makeText(this, "Gagal mengunggah gambar.", Toast.LENGTH_SHORT)
-                        .show()
-                }
-        }
-    }
-
-    private fun getFileExtension(uri: Uri): String {
-        val contentResolver = contentResolver
-        val mime = android.webkit.MimeTypeMap.getSingleton()
-        return mime.getExtensionFromMimeType(contentResolver.getType(uri)) ?: "jpg"
-    }
-
-    private fun updateProfileImage(uri: Uri) {
-        val user = auth.currentUser
-        val profileUpdates = UserProfileChangeRequest.Builder()
-            .setPhotoUri(uri)
-            .build()
-
-        user?.updateProfile(profileUpdates)
-            ?.addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    Glide.with(this).clear(binding.profileImage)
-
-                    Glide.with(this)
-                        .load(uri)
-                        .into(binding.profileImage)
-                    sessionManager.saveImageUrl(uri.toString())
-                    saveProfileImageUriToDatabase(uri.toString())
-                }
-            }
-    }
-
-    private fun saveProfileImageUriToDatabase(imageUrl: String?) {
-        val userUid = auth.currentUser?.uid ?: return
-        val database = FirebaseDatabase.getInstance().getReference("Users").child(userUid)
-
-        val updates = hashMapOf<String, Any>("imageUrl" to (imageUrl ?: ""))
-
-        database.updateChildren(updates).addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                Toast.makeText(this, "Profil gambar diperbarui.", Toast.LENGTH_SHORT)
-                    .show()
-            }
-        }
+    companion object {
+        private const val PICK_IMAGE_REQUEST = 1
     }
 }

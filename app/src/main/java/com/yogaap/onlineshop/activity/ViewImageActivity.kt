@@ -15,7 +15,7 @@ class ViewImageActivity : AppCompatActivity() {
         binding = ActivityViewImageBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val imageUrl = intent.getStringExtra("imageUrl")
+        val imageUrl = intent.getStringExtra("IMAGE_URL")
         if (imageUrl != null) {
             Glide.with(this).load(imageUrl).into(binding.fullImageView)
         } else {

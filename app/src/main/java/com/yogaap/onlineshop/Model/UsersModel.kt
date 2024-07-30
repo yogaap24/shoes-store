@@ -2,5 +2,6 @@ package com.yogaap.onlineshop.Model
 
 data class UsersModel (
     var name: String = "",
-    var email: String = ""
+    var email: String = "",
+    var imageUrl: String ?= null
 )

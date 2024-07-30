@@ -82,7 +82,7 @@ class RegisterActivity : AppCompatActivity() {
             }
     }
 
-    private fun saveUser(name: String, email: String, imageUrl: String = "") {
+    private fun saveUser(name: String, email: String) {
         val firebaseUser = auth.currentUser
         firebaseUser?.let {
             val user = UsersModel(name, email)
