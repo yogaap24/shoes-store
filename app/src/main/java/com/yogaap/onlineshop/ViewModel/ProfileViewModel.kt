@@ -11,8 +11,11 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.UserProfileChangeRequest
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.database.ValueEventListener
 import com.yogaap.onlineshop.Helper.ImageHelper
 import com.yogaap.onlineshop.Helper.SessionManager
 import com.yogaap.onlineshop.Model.UsersModel
@@ -33,11 +36,42 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     private val _imageDeleteResult = MutableLiveData<Boolean>()
     val imageDeleteResult: LiveData<Boolean> = _imageDeleteResult
 
+    private var userDatabaseReference: DatabaseReference? = null
+    private var userListener: ValueEventListener? = null
+
     fun loadUserProfile() {
         val user = firebaseAuth.currentUser ?: return
         val userUid = user.uid
 
-        loadFromDatabase(userUid)
+        // Set up new listener
+        userDatabaseReference = firebaseDatabase.getReference("Users").child(userUid)
+        userListener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val userProfile = snapshot.getValue(UsersModel::class.java)
+                if (userProfile != null) {
+                    _userProfile.value = userProfile
+                    sessionManager.saveUserSession(userProfile.name, userProfile.email)
+
+                    val imageUrl = userProfile.imageUrl
+                    if (imageUrl != null) {
+                        sessionManager.saveImageUrl(imageUrl)
+                        _imageUploadResult.value = Pair(imageUrl, null)
+                    } else {
+                        sessionManager.clearImageUrl() // Pastikan cache dihapus saat imageUrl null
+                        _imageUploadResult.value = Pair(null, null)
+                    }
+                }
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Log.e(
+                    "ProfileViewModel",
+                    "Gagal memuat data pengguna dari database",
+                    error.toException()
+                )
+            }
+        }
+        userDatabaseReference!!.addValueEventListener(userListener!!)
 
         val cachedUser = sessionManager.getUserSession()
         val cachedImageUrl = sessionManager.getImageUrl()
@@ -45,29 +79,6 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         if (cachedUser != null) {
             _userProfile.value = cachedUser
             _imageUploadResult.value = Pair(cachedImageUrl, null)
-        } else {
-            loadFromDatabase(userUid)
-        }
-    }
-
-    private fun loadFromDatabase(userUid: String) {
-        val databaseReference = firebaseDatabase.getReference("Users").child(userUid)
-        databaseReference.get().addOnSuccessListener { snapshot ->
-            val userProfile = snapshot.getValue(UsersModel::class.java)
-            if (userProfile != null) {
-                _userProfile.value = userProfile
-                sessionManager.saveUserSession(userProfile.name, userProfile.email)
-
-                val imageUrl = userProfile.imageUrl
-                if (imageUrl != null) {
-                    sessionManager.saveImageUrl(imageUrl)
-                    _imageUploadResult.value = Pair(imageUrl, null)
-                } else {
-                    _imageUploadResult.value = Pair(null, null)
-                }
-            }
-        }.addOnFailureListener {
-            Log.e("ProfileViewModel", "Gagal memuat data pengguna dari database", it)
         }
     }
 
@@ -93,15 +104,13 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
 
         user.updateProfile(profileUpdates).addOnCompleteListener { task ->
             if (task.isSuccessful) {
-                _imageUploadResult.value = Pair(imageUrl, null)
-                sessionManager.saveImageUrl(imageUrl)
-
                 val userUid = user.uid
                 val databaseReference = firebaseDatabase.getReference("Users").child(userUid)
 
                 databaseReference.child("imageUrl").setValue(imageUrl)
                     .addOnCompleteListener { dbTask ->
                         if (dbTask.isSuccessful) {
+                            _imageUploadResult.value = Pair(imageUrl, null)
                             sessionManager.saveImageUrl(imageUrl)
                             Toast.makeText(
                                 getApplication(),
@@ -127,31 +136,35 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
 
     fun deleteProfileImage() {
         val user = firebaseAuth.currentUser ?: return
-        val currentImageUrl = sessionManager.getImageUrl() ?: return
+        val profileUpdates = UserProfileChangeRequest.Builder()
+            .setPhotoUri(null)
+            .build()
 
-        val storageReference = FirebaseStorage.getInstance().getReferenceFromUrl(currentImageUrl)
+        user.updateProfile(profileUpdates).addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                val userUid = user.uid
+                val databaseReference = firebaseDatabase.getReference("Users").child(userUid)
 
-        storageReference.delete().addOnSuccessListener {
-            val userUid = user.uid
-            val databaseReference = firebaseDatabase.getReference("Users").child(userUid)
+                databaseReference.child("imageUrl").removeValue()
+                    .addOnCompleteListener { dbTask ->
+                        if (dbTask.isSuccessful) {
+                            sessionManager.clearImageUrl()
+                            Toast.makeText(
+                                getApplication(),
+                                "Gambar profil berhasil dihapus",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            _imageDeleteResult.value = true
 
-            databaseReference.child("imageUrl").removeValue()
-                .addOnCompleteListener { dbTask ->
-                    if (dbTask.isSuccessful) {
-                        sessionManager.clearImageUrl()
-                        Toast.makeText(
-                            getApplication(),
-                            "Gambar profil berhasil dihapus",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        _imageDeleteResult.value = true
-                    } else {
-                        Log.e(
-                            "ProfileViewModel", "Gagal menghapus URL gambar di database"
-                        )
-                        _imageDeleteResult.value = false
+                            databaseReference.addValueEventListener(userListener!!)
+                        } else {
+                            Log.e(
+                                "ProfileViewModel", "Gagal menghapus URL gambar di database"
+                            )
+                            _imageDeleteResult.value = false
+                        }
                     }
-                }
+            }
         }.addOnFailureListener {
             Toast.makeText(
                 getApplication(),
@@ -168,5 +181,10 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
             putExtra("IMAGE_URL", imageUrl)
         }
         context.startActivity(intent)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        userDatabaseReference?.removeEventListener(userListener!!)
     }
 }
