@@ -24,7 +24,7 @@ Additional features will be continuously updated.
 
 ## Demo
 
-Check out the demo of the Shoes Store application [HERE](https://github.com/yogaap24/shoes-store/blob/master/Demo%20shoes%20project.gif). (Link to GIF or video demo)
+Check out the demo of the Shoes Store application [HERE](https://drive.google.com/file/d/14I2VYs4_fi_DtC3eYIXXlZIiNW9dvECP/view?usp=sharing).
 
 
 ## Setup Instructions
