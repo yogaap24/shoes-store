@@ -15,12 +15,12 @@
           <targets>
             <Target type="DEFAULT_BOOT">
               <handle>
-                <DeviceId pluginId="PhysicalDevice" identifier="serial=R9CTB005M3B" />
+                <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\yogaap\.android\avd\Pixel_3a_API_24.avd" />
               </handle>
             </Target>
             <Target type="DEFAULT_BOOT">
               <handle>
-                <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\yogaap\.android\avd\Pixel_5_API_34.avd" />
+                <DeviceId pluginId="PhysicalDevice" identifier="serial=R9CTB005M3B" />
               </handle>
             </Target>
           </targets>

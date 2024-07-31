@@ -1,5 +1,6 @@
 package com.yogaap.onlineshop.activity
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.viewpager2.widget.ViewPager2
@@ -66,15 +67,15 @@ class DetailActivity : BaseActivity(), ColorAdapter.OnColorSelectedListener {
         binding.productDesc.text = item.description
         binding.productPrice.text = "Rp" + item.price
         binding.productRating.text = "${item.rating} Rating"
+
         binding.productAddCart.setOnClickListener {
             item.numberInCart = orderNumber
             managementCart.insertItem(item)
+            startActivity(Intent(this, CartActivity::class.java))
         }
+
         binding.productBack.setOnClickListener {
             finish()
-        }
-        binding.productAddCart.setOnClickListener {
-
         }
     }
 

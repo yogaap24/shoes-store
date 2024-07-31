@@ -6,6 +6,7 @@ import android.view.View
 import android.widget.Toast
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.yogaap.onlineshop.R
+import com.yogaap.onlineshop.activity.CartActivity
 import com.yogaap.onlineshop.activity.ListActivity
 import com.yogaap.onlineshop.activity.LoginActivity
 import com.yogaap.onlineshop.activity.ProfileActivity
@@ -24,7 +25,7 @@ fun BottomNavigationView.setupNavigation(context: Context) {
         if (sessionManager.getUserSession() == null) {
             context.startActivity(Intent(context, LoginActivity::class.java))
         } else {
-            Toast.makeText(context, "Cart", Toast.LENGTH_SHORT).show()
+            context.startActivity(Intent(context, CartActivity::class.java))
         }
     }
 

@@ -15,7 +15,7 @@
     <string name="dash_order">My Order</string>
     <string name="dash_profile">Profile</string>
     <string name="holder_txt">Title</string>
-    <string name="holder_currency">Rp</string>
+    <string name="holder_currency">Rp. </string>
     <string name="rating">4.3</string>
     <string name="product_size">Select Size</string>
     <string name="product_desc">Description</string>
@@ -28,4 +28,14 @@
     <string name="register_text">Register</string>
     <string name="input_name">Name</string>
     <string name="logout">Logout</string>
+    <string name="cart_empty">Your Cart is Empty</string>
+    <string name="my_cart">My Cart</string>
+    <string name="subtotal">Subtotal</string>
+    <string name="ongkir">Biaya Ongkir</string>
+    <string name="pajak">Total Pajak</string>
+    <string name="total">Total</string>
+    <string name="checkout">Check Out</string>
+    <string name="plus_item">+</string>
+    <string name="minus_item">-</string>
+    <string name="total_item">0</string>
 </resources>

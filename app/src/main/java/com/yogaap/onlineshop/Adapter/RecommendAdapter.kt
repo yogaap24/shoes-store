@@ -29,13 +29,14 @@ class RecommendAdapter (
     }
 
     override fun onBindViewHolder(holder: RecommendAdapter.ViewHolder, position: Int) {
-        holder.binding.titleTxtView.text = items[position].title
-        holder.binding.priceTxtView.text = "Rp" + items[position].price.toString()
-        holder.binding.ratingTxtView.text = items[position].rating.toString()
+        val item = items[position]
+        holder.binding.titleTxtView.text = item.title
+        holder.binding.priceTxtView.text = "Rp. ${item.price}"
+        holder.binding.ratingTxtView.text = item.rating.toString()
 
         val requestOptions = RequestOptions().transform(CenterCrop())
         Glide.with(context!!)
-            .load(items[position].picUrl[0])
+            .load(item.picUrl[0])
             .apply(requestOptions)
             .into(holder.binding.recommendImgView)
 
@@ -66,7 +67,7 @@ class RecommendAdapter (
 
         holder.binding.root.setOnClickListener {
             val intent = Intent(context, DetailActivity::class.java)
-            intent.putExtra("item_object", items[position])
+            intent.putExtra("item_object", item)
             holder.itemView.context.startActivity(intent)
         }
     }
